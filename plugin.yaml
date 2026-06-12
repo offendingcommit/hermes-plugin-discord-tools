@@ -10,6 +10,7 @@ provides_tools:
   - discord_read_channel
   - discord_read_thread
   - discord_get_message
+  - discord_read_story
 provides_hooks:
   - pre_llm_call
 requires_env:
@@ -27,4 +28,13 @@ requires_env:
     secret: false
   - name: DISCORD_TOOLS_STORY_HINTS_JSON
     description: Optional inline JSON or local JSON file path for story hints.
+    secret: false
+  - name: DISCORD_TOOLS_STORY_THREADS_JSON
+    description: >-
+      Optional inline JSON (or local JSON file path) of preconfigured story
+      threads for discord_read_story, e.g. [{"name":"House of Tea",
+      "thread_id":"...","aliases":["bea"]}].
+    secret: false
+  - name: DISCORD_TOOLS_STORY_THREAD_ID
+    description: Optional single story thread ID for discord_read_story when only one is needed.
     secret: false

@@ -132,7 +132,12 @@ class StandaloneContractTests(unittest.TestCase):
         names = {c["name"] for c in self.ctx.tool_calls}
         self.assertEqual(
             names,
-            {"discord_read_channel", "discord_read_thread", "discord_get_message"},
+            {
+                "discord_read_channel",
+                "discord_read_thread",
+                "discord_get_message",
+                "discord_read_story",
+            },
         )
         for call in self.ctx.tool_calls:
             self.assertEqual(call["toolset"], "messaging")
@@ -159,6 +164,7 @@ class StandaloneContractTests(unittest.TestCase):
             "discord_get_message": {
                 "message_id_or_url": "https://discord.com/channels/1/2/3"
             },
+            "discord_read_story": {},
         }
         with _cleared_token_env():
             for call in self.ctx.tool_calls:
