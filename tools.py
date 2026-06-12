@@ -18,6 +18,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
+from hermes_plugin_kit import int_arg, str_arg, tool
+
 from . import schemas
 
 logger = logging.getLogger("discord-tools")
@@ -481,33 +483,116 @@ def _live_fetcher(env: dict[str, str]) -> Fetcher | str:
     return DiscordLiveFetcher(token=token, timeout_seconds=timeout)
 
 
+@tool(
+    toolset="messaging",
+    requires_env=["DISCORD_BOT_TOKEN"],
+    description=(
+        "Read recent messages from a Discord channel the bot can already access. "
+        "Use when memory may be stale and the user gives a Discord channel URL or ID."
+    ),
+    params={
+        "channel_id_or_url": str_arg(
+            "Discord channel URL or raw channel snowflake.",
+            required=True,
+            example="123456789012345678",
+        ),
+        "limit": int_arg(
+            f"Messages to return, capped at {schemas.MAX_MAX_MESSAGES}.",
+            minimum=1,
+            maximum=schemas.MAX_MAX_MESSAGES,
+        ),
+        "before": str_arg("Optional Discord message snowflake to page before."),
+        "after": str_arg("Optional Discord message snowflake to page after."),
+    },
+)
 def discord_read_channel(args: dict[str, Any], **_kwargs: Any) -> str:
-    env = os.environ
-    fetcher = _live_fetcher(env)
+    fetcher = _live_fetcher(os.environ)
     if isinstance(fetcher, str):
         return _err(fetcher)
-    return read_channel_impl(args or {}, fetcher, env)
+    return read_channel_impl(args or {}, fetcher, os.environ)
 
 
+@tool(
+    toolset="messaging",
+    requires_env=["DISCORD_BOT_TOKEN"],
+    description=(
+        "Read recent messages from a Discord thread the bot can already access. "
+        "A Discord thread is fetched through the same read-only channel API."
+    ),
+    params={
+        "thread_id_or_url": str_arg(
+            "Discord thread URL or raw thread snowflake.",
+            required=True,
+            example="123456789012345678",
+        ),
+        "limit": int_arg(
+            f"Messages to return, capped at {schemas.MAX_MAX_MESSAGES}.",
+            minimum=1,
+            maximum=schemas.MAX_MAX_MESSAGES,
+        ),
+        "before": str_arg("Optional Discord message snowflake to page before."),
+        "after": str_arg("Optional Discord message snowflake to page after."),
+    },
+)
 def discord_read_thread(args: dict[str, Any], **_kwargs: Any) -> str:
-    env = os.environ
-    fetcher = _live_fetcher(env)
+    fetcher = _live_fetcher(os.environ)
     if isinstance(fetcher, str):
         return _err(fetcher)
-    return read_thread_impl(args or {}, fetcher, env)
+    return read_thread_impl(args or {}, fetcher, os.environ)
 
 
+@tool(
+    toolset="messaging",
+    requires_env=["DISCORD_BOT_TOKEN"],
+    description=(
+        "Fetch a specific Discord message plus bounded prior context. Prefer a "
+        "full Discord message URL so the channel ID is unambiguous."
+    ),
+    params={
+        "message_id_or_url": str_arg(
+            "Discord message URL or raw message snowflake.",
+            required=True,
+            example="https://discord.com/channels/<guild>/<channel>/<message>",
+        ),
+        "channel_id": str_arg(
+            "Required only when message_id_or_url is a raw message ID."
+        ),
+        "context_limit": int_arg(
+            f"Total messages including the target, capped at {schemas.MAX_CONTEXT_LIMIT}.",
+            minimum=1,
+            maximum=schemas.MAX_CONTEXT_LIMIT,
+        ),
+    },
+)
 def discord_get_message(args: dict[str, Any], **_kwargs: Any) -> str:
-    env = os.environ
-    fetcher = _live_fetcher(env)
+    fetcher = _live_fetcher(os.environ)
     if isinstance(fetcher, str):
         return _err(fetcher)
-    return get_message_impl(args or {}, fetcher, env)
+    return get_message_impl(args or {}, fetcher, os.environ)
 
 
+@tool(
+    toolset="messaging",
+    requires_env=["DISCORD_BOT_TOKEN"],
+    description=(
+        "Read recent messages from a preconfigured story thread (such as the House "
+        "of Tea) by name. Use this for a known ongoing story thread when you do not "
+        "have its link or ID. No Discord URL or snowflake is required."
+    ),
+    params={
+        "name": str_arg(
+            "Which configured story to read. Optional when only one is configured."
+        ),
+        "limit": int_arg(
+            f"Messages to return, capped at {schemas.MAX_MAX_MESSAGES}.",
+            minimum=1,
+            maximum=schemas.MAX_MAX_MESSAGES,
+        ),
+        "before": str_arg("Optional Discord message snowflake to page before."),
+    },
+)
 def discord_read_story(args: dict[str, Any], **_kwargs: Any) -> str:
-    env = os.environ
-    fetcher = _live_fetcher(env)
+    fetcher = _live_fetcher(os.environ)
     if isinstance(fetcher, str):
         return _err(fetcher)
-    return read_story_impl(args or {}, fetcher, env)
+    return read_story_impl(args or {}, fetcher, os.environ)
