@@ -40,7 +40,9 @@ it is a filesystem path, the hook reads that local JSON file.
 
 ## Environment
 
-- `DISCORD_TOKEN`: required for live Discord reads.
+- `DISCORD_BOT_TOKEN`: the bot token the Hermes gateway already loads — reused
+  for live Discord reads. `DISCORD_TOKEN` is accepted as a fallback alias for
+  standalone use.
 - `DISCORD_TOOLS_ALLOWED_GUILDS`: optional comma-separated guild allowlist. If
   unset, Discord access is bounded only by the bot token's existing visibility.
 - `DISCORD_TOOLS_MAX_MESSAGES`: optional default/max message limit, default 100.

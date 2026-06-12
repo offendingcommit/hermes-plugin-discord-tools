@@ -153,7 +153,27 @@ class DiscordToolTests(unittest.TestCase):
             tools.os.environ.update(old)
 
         self.assertFalse(result["success"])
-        self.assertIn("DISCORD_TOKEN", result["error"])
+        self.assertIn("DISCORD_BOT_TOKEN", result["error"])
+
+    def test_live_fetcher_uses_gateway_bot_token(self) -> None:
+        # Hermes' gateway loads the token as DISCORD_BOT_TOKEN — reads must reuse it.
+        fetcher = tools._live_fetcher({"DISCORD_BOT_TOKEN": "bot-tok"})
+        self.assertIsInstance(fetcher, tools.DiscordLiveFetcher)
+        self.assertEqual(fetcher.token, "bot-tok")
+
+    def test_live_fetcher_falls_back_to_discord_token_alias(self) -> None:
+        fetcher = tools._live_fetcher({"DISCORD_TOKEN": "legacy-tok"})
+        self.assertIsInstance(fetcher, tools.DiscordLiveFetcher)
+        self.assertEqual(fetcher.token, "legacy-tok")
+
+    def test_live_fetcher_prefers_bot_token_over_alias(self) -> None:
+        fetcher = tools._live_fetcher({"DISCORD_BOT_TOKEN": "bot", "DISCORD_TOKEN": "alias"})
+        self.assertEqual(fetcher.token, "bot")
+
+    def test_live_fetcher_missing_token_returns_message(self) -> None:
+        result = tools._live_fetcher({})
+        self.assertIsInstance(result, str)
+        self.assertIn("DISCORD_BOT_TOKEN", result)
 
 
 if __name__ == "__main__":
