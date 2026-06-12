@@ -132,12 +132,24 @@ class StandaloneContractTests(unittest.TestCase):
         names = {c["name"] for c in self.ctx.tool_calls}
         self.assertEqual(
             names,
-            {"discord_read_channel", "discord_read_thread", "discord_get_message"},
+            {
+                "discord_read_channel",
+                "discord_read_thread",
+                "discord_get_message",
+                "discord_read_story",
+            },
         )
         for call in self.ctx.tool_calls:
             self.assertEqual(call["toolset"], "messaging")
-            self.assertIsInstance(call["schema"], dict)
-            self.assertEqual(call["schema"].get("type"), "object")
+            schema = call["schema"]
+            self.assertIsInstance(schema, dict)
+            # Hermes convention: args live under `parameters`, NOT at the top
+            # level. Top-level `properties` makes the model receive no args.
+            self.assertIn("parameters", schema, f"{call['name']} schema needs a 'parameters' wrapper")
+            self.assertEqual(schema["parameters"].get("type"), "object")
+            self.assertIsInstance(schema["parameters"].get("properties"), dict)
+            self.assertNotIn("properties", schema, "JSON Schema must be under `parameters`, not top-level")
+            self.assertIsInstance(schema.get("description"), str)
             self.assertTrue(callable(call["handler"]))
             self.assertFalse(call["is_async"], "sync handlers must register is_async=False")
             self.assertIn("DISCORD_BOT_TOKEN", call["requires_env"] or [])
@@ -159,6 +171,7 @@ class StandaloneContractTests(unittest.TestCase):
             "discord_get_message": {
                 "message_id_or_url": "https://discord.com/channels/1/2/3"
             },
+            "discord_read_story": {},
         }
         with _cleared_token_env():
             for call in self.ctx.tool_calls:

@@ -28,7 +28,12 @@ class RegistrationTests(unittest.TestCase):
 
         self.assertEqual(
             {tool["name"] for tool in ctx.tools},
-            {"discord_read_channel", "discord_read_thread", "discord_get_message"},
+            {
+                "discord_read_channel",
+                "discord_read_thread",
+                "discord_get_message",
+                "discord_read_story",
+            },
         )
         self.assertEqual({tool["toolset"] for tool in ctx.tools}, {"messaging"})
         self.assertIn(("pre_llm_call", plugin.hooks.inject_discord_read_hint), ctx.hooks)
