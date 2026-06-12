@@ -1,0 +1,24 @@
+# Dependency manifest for discord-tools (uv-native, GitOps source of truth).
+# Loaded by hermes from source (by path), never pip-installed as a distribution,
+# so `package = false` — uv just manages the dev/runtime deps below, which the
+# pod's bootstrap installs into the gateway's PYTHONPATH.
+[project]
+name = "discord-tools"
+version = "0.2.0"
+description = "Read-only Discord channel, thread, and message inspection tools for Hermes Discord-facing agents."
+requires-python = ">=3.13"
+dependencies = [
+  "discord.py>=2.4",                 # DiscordLiveFetcher — live reads
+  "hermes-plugin-kit",               # @tool / register_all convention helpers
+]
+
+[dependency-groups]
+dev = [
+  "pyyaml",                          # tests/test_hermes_contract.py manifest-parity check
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+hermes-plugin-kit = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git", branch = "main" }
