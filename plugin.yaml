@@ -1,0 +1,27 @@
+name: discord-tools
+version: 0.1.0
+description: >-
+  Read-only Discord channel, thread, and message inspection tools for Hermes
+  Discord-facing agents. Reuses the profile's existing DISCORD_TOKEN and only
+  reads content the bot can already access.
+author: offendingcommit
+kind: standalone
+provides_tools:
+  - discord_read_channel
+  - discord_read_thread
+  - discord_get_message
+provides_hooks:
+  - pre_llm_call
+requires_env:
+  - name: DISCORD_TOKEN
+    description: Existing Discord bot token used by the profile runtime.
+    secret: true
+  - name: DISCORD_TOOLS_ALLOWED_GUILDS
+    description: Optional comma-separated guild IDs allowed for reads.
+    secret: false
+  - name: DISCORD_TOOLS_STORY_HINTS
+    description: Optional inline JSON story hint config for the hint hook.
+    secret: false
+  - name: DISCORD_TOOLS_STORY_HINTS_JSON
+    description: Optional inline JSON or local JSON file path for story hints.
+    secret: false
