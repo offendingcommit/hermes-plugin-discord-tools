@@ -175,6 +175,59 @@ class DiscordToolTests(unittest.TestCase):
         self.assertIsInstance(result, str)
         self.assertIn("DISCORD_BOT_TOKEN", result)
 
+    def test_read_story_uses_single_configured_thread(self) -> None:
+        # No name needed when exactly one story is configured — survives an
+        # empty/opaque tool schema because the only arg is optional.
+        fetcher = FakeFetcher()
+        result = decoded(
+            tools.read_story_impl({}, fetcher, {"DISCORD_TOOLS_STORY_THREAD_ID": CHANNEL_ID})
+        )
+
+        self.assertTrue(result["success"])
+        self.assertEqual(result["data"]["kind"], "story")
+        self.assertEqual(result["data"]["channel_id"], CHANNEL_ID)
+        self.assertEqual(fetcher.calls[0][0], "read_channel")
+
+    def test_read_story_resolves_by_name_and_alias(self) -> None:
+        env = {
+            "DISCORD_TOOLS_STORY_THREADS_JSON": json.dumps(
+                [{"name": "House of Tea", "thread_id": CHANNEL_ID, "aliases": ["bea"]}]
+            )
+        }
+        by_name = decoded(tools.read_story_impl({"name": "house of tea"}, FakeFetcher(), env))
+        by_alias = decoded(tools.read_story_impl({"name": "Bea"}, FakeFetcher(), env))
+
+        self.assertTrue(by_name["success"])
+        self.assertEqual(by_name["data"]["story_name"], "House of Tea")
+        self.assertTrue(by_alias["success"])
+
+    def test_read_story_requires_name_when_multiple(self) -> None:
+        env = {
+            "DISCORD_TOOLS_STORY_THREADS_JSON": json.dumps(
+                [
+                    {"name": "House of Tea", "thread_id": CHANNEL_ID},
+                    {"name": "Other", "thread_id": "999999999999999999"},
+                ]
+            )
+        }
+        result = decoded(tools.read_story_impl({}, FakeFetcher(), env))
+
+        self.assertFalse(result["success"])
+        self.assertIn("Multiple story threads", result["error"])
+
+    def test_read_story_unknown_name_lists_available(self) -> None:
+        env = {"DISCORD_TOOLS_STORY_THREAD_ID": CHANNEL_ID}
+        result = decoded(tools.read_story_impl({"name": "nope"}, FakeFetcher(), env))
+
+        self.assertFalse(result["success"])
+        self.assertIn("No story thread named", result["error"])
+
+    def test_read_story_none_configured(self) -> None:
+        result = decoded(tools.read_story_impl({}, FakeFetcher(), {}))
+
+        self.assertFalse(result["success"])
+        self.assertIn("No story threads are configured", result["error"])
+
 
 if __name__ == "__main__":
     unittest.main()

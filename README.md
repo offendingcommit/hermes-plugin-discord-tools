@@ -10,12 +10,31 @@ truth before answering.
 
 ## Tools
 
-- `discord_read_channel`: read recent messages from a Discord channel URL or ID.
-- `discord_read_thread`: read recent messages from a Discord thread URL or ID.
-- `discord_get_message`: fetch one linked message plus bounded prior context.
+- `discord_read_channel`: read recent messages from a Discord channel URL or ID
+  (`channel_id_or_url`).
+- `discord_read_thread`: read recent messages from a Discord thread URL or ID
+  (`thread_id_or_url`).
+- `discord_get_message`: fetch one linked message plus bounded prior context
+  (`message_id_or_url`).
+- `discord_read_story`: read a **preconfigured** story thread by `name` (or with
+  no arguments when only one is configured). No Discord URL/ID needed — the
+  thread ID comes from env config, so the agent never has to supply a snowflake
+  it does not have. See `DISCORD_TOOLS_STORY_THREADS_JSON` below.
 
 All tools return JSON with a `success` flag. They never write to Discord or to
-memory.
+memory. Each tool's required argument name is repeated in its description (not
+only the JSON schema) so the agent can call it correctly even when a runtime
+surfaces the schema's `properties` as empty.
+
+## Logging
+
+The plugin logs under the `discord-tools` logger. On a rejected argument it logs
+a `WARNING` with the offending value (truncated, never the token), and on a
+successful read an `INFO` line with the resolved target. To watch it in a pod:
+
+```bash
+kubectl logs -f <pod> | grep discord-tools
+```
 
 ## Hook
 
@@ -51,6 +70,11 @@ it is a filesystem path, the hook reads that local JSON file.
 - `DISCORD_TOOLS_STORY_HINTS`: optional inline story hint JSON.
 - `DISCORD_TOOLS_STORY_HINTS_JSON`: optional inline story hint JSON or path to a
   local JSON file.
+- `DISCORD_TOOLS_STORY_THREADS_JSON`: optional inline JSON (or path to a local
+  JSON file) listing preconfigured story threads for `discord_read_story`, e.g.
+  `[{"name":"House of Tea","thread_id":"123456789012345678","aliases":["bea"]}]`.
+- `DISCORD_TOOLS_STORY_THREAD_ID`: optional single story thread ID for
+  `discord_read_story` when only one story is needed.
 
 ## Validation
 

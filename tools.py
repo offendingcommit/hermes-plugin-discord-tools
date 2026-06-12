@@ -9,14 +9,18 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
 import threading
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Protocol
 
 from . import schemas
+
+logger = logging.getLogger("discord-tools")
 
 DISCORD_URL_RE = re.compile(
     r"https?://(?:(?:canary|ptb)\.)?discord(?:app)?\.com/channels/"
@@ -168,9 +172,16 @@ def _shape_messages(raw_messages: list[Any], max_chars: int) -> tuple[list[dict[
 
 def read_channel_impl(args: dict[str, Any], fetcher: Fetcher, env: dict[str, str] | None = None) -> str:
     env = os.environ if env is None else env
-    ref = parse_discord_ref((args or {}).get("channel_id_or_url"))
+    raw = (args or {}).get("channel_id_or_url")
+    ref = parse_discord_ref(raw)
     if not ref or not ref.channel_id:
-        return _err("channel_id_or_url must be a Discord channel URL or snowflake")
+        logger.warning(
+            "discord-tools: read_channel rejected channel_id_or_url=%r", str(raw)[:120]
+        )
+        return _err(
+            "channel_id_or_url must be a Discord channel link or numeric ID "
+            "(e.g. https://discord.com/channels/<guild>/<channel> or 123456789012345678)"
+        )
 
     allowed_guilds = _allowed_guilds(env)
     if ref.guild_id:
@@ -182,6 +193,7 @@ def read_channel_impl(args: dict[str, Any], fetcher: Fetcher, env: dict[str, str
     limit = _clamp((args or {}).get("limit"), max_messages, 1, max_messages)
     max_chars = _env_int(env, "DISCORD_TOOLS_MAX_CHARS", schemas.DEFAULT_MAX_CHARS, 200, schemas.MAX_MAX_CHARS)
 
+    logger.info("discord-tools: reading channel %s (limit=%d)", ref.channel_id, limit)
     try:
         fetched = fetcher.read_channel(
             ref.channel_id,
@@ -218,11 +230,95 @@ def read_thread_impl(args: dict[str, Any], fetcher: Fetcher, env: dict[str, str]
     return json.dumps(result, ensure_ascii=False)
 
 
+def _load_story_threads(env: dict[str, str]) -> list[dict[str, Any]]:
+    """Load preconfigured story threads from env: inline JSON, a file path, or a single ID."""
+    threads: list[dict[str, Any]] = []
+    raw = env.get("DISCORD_TOOLS_STORY_THREADS") or env.get("DISCORD_TOOLS_STORY_THREADS_JSON") or ""
+    raw = raw.strip()
+    if raw:
+        if not raw.startswith(("{", "[")):
+            try:
+                raw = Path(raw).read_text(encoding="utf-8")
+            except OSError:
+                logger.debug("discord-tools: story threads path is unreadable")
+                raw = ""
+        if raw:
+            try:
+                parsed: Any = json.loads(raw)
+            except ValueError:
+                logger.debug("discord-tools: story threads JSON is invalid")
+                parsed = None
+            if isinstance(parsed, dict):
+                parsed = parsed.get("threads") or parsed.get("stories") or []
+            if isinstance(parsed, list):
+                for item in parsed:
+                    if isinstance(item, dict) and item.get("thread_id"):
+                        threads.append(
+                            {
+                                "name": str(item.get("name") or "").strip(),
+                                "thread_id": str(item["thread_id"]).strip(),
+                                "aliases": [
+                                    str(alias).strip().lower()
+                                    for alias in (item.get("aliases") or [])
+                                ],
+                            }
+                        )
+
+    single = (env.get("DISCORD_TOOLS_STORY_THREAD_ID") or "").strip()
+    if single:
+        threads.append({"name": "default", "thread_id": single, "aliases": []})
+    return threads
+
+
+def _resolve_story_thread(
+    name: Any, threads: list[dict[str, Any]]
+) -> tuple[dict[str, Any] | None, str | None]:
+    if not threads:
+        return None, (
+            "No story threads are configured. Set DISCORD_TOOLS_STORY_THREADS_JSON "
+            "or DISCORD_TOOLS_STORY_THREAD_ID."
+        )
+    wanted = str(name or "").strip().lower()
+    if not wanted:
+        if len(threads) == 1:
+            return threads[0], None
+        names = ", ".join(thread["name"] for thread in threads if thread["name"])
+        return None, f"Multiple story threads configured; pass a name. Available: {names}"
+    for thread in threads:
+        if thread["name"].lower() == wanted or wanted in thread["aliases"]:
+            return thread, None
+    names = ", ".join(thread["name"] for thread in threads if thread["name"])
+    return None, f"No story thread named {name!r}. Available: {names}"
+
+
+def read_story_impl(args: dict[str, Any], fetcher: Fetcher, env: dict[str, str] | None = None) -> str:
+    env = os.environ if env is None else env
+    threads = _load_story_threads(env)
+    story, error = _resolve_story_thread((args or {}).get("name"), threads)
+    if error:
+        logger.warning("discord-tools: read_story could not resolve a thread: %s", error)
+        return _err(error)
+
+    logger.info("discord-tools: reading story %r thread %s", story["name"], story["thread_id"])
+    translated = dict(args or {})
+    translated["channel_id_or_url"] = story["thread_id"]
+    result = json.loads(read_channel_impl(translated, fetcher, env))
+    if result.get("success"):
+        result["data"]["kind"] = "story"
+        result["data"]["story_name"] = story["name"]
+    return json.dumps(result, ensure_ascii=False)
+
+
 def get_message_impl(args: dict[str, Any], fetcher: Fetcher, env: dict[str, str] | None = None) -> str:
     env = os.environ if env is None else env
-    ref = _parse_message_ref((args or {}).get("message_id_or_url"), (args or {}).get("channel_id"))
+    raw = (args or {}).get("message_id_or_url")
+    ref = _parse_message_ref(raw, (args or {}).get("channel_id"))
     if not ref or not ref.message_id:
-        return _err("message_id_or_url must be a Discord message URL or snowflake")
+        logger.warning("discord-tools: get_message rejected message_id_or_url=%r", str(raw)[:120])
+        return _err(
+            "message_id_or_url must be a Discord message link or numeric ID "
+            "(e.g. https://discord.com/channels/<guild>/<channel>/<message>)"
+        )
     if not ref.channel_id:
         return _err("A raw message ID requires channel_id; prefer a Discord message URL.")
 
@@ -407,3 +503,11 @@ def discord_get_message(args: dict[str, Any], **_kwargs: Any) -> str:
     if isinstance(fetcher, str):
         return _err(fetcher)
     return get_message_impl(args or {}, fetcher, env)
+
+
+def discord_read_story(args: dict[str, Any], **_kwargs: Any) -> str:
+    env = os.environ
+    fetcher = _live_fetcher(env)
+    if isinstance(fetcher, str):
+        return _err(fetcher)
+    return read_story_impl(args or {}, fetcher, env)
