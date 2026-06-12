@@ -373,9 +373,11 @@ class DiscordLiveFetcher:
 
 
 def _live_fetcher(env: dict[str, str]) -> Fetcher | str:
-    token = env.get("DISCORD_TOKEN")
+    # Hermes' Discord gateway loads the bot token as DISCORD_BOT_TOKEN; reuse it.
+    # DISCORD_TOKEN is kept as a fallback alias for standalone use.
+    token = env.get("DISCORD_BOT_TOKEN") or env.get("DISCORD_TOKEN")
     if not token:
-        return "DISCORD_TOKEN is required for live Discord reads"
+        return "DISCORD_BOT_TOKEN is required for live Discord reads"
     try:
         timeout = float(env.get("DISCORD_TOOLS_TIMEOUT_SECONDS", schemas.DEFAULT_TIMEOUT_SECONDS))
     except ValueError:

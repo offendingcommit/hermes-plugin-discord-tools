@@ -23,7 +23,7 @@ def register(ctx) -> None:
             toolset=TOOLSET,
             schema=schema,
             handler=handler,
-            requires_env=["DISCORD_TOKEN"],
+            requires_env=["DISCORD_BOT_TOKEN"],
             description=schema.get("description", ""),
         )
 
