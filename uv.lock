@@ -281,7 +281,7 @@ wheels = [
 [[package]]
 name = "hermes-plugin-kit"
 version = "0.1.0"
-source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?branch=main#dad2d3545328da50b8fdffc3d18e15b97c914f37" }
+source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?branch=main#09aa2c2b5c57fa1bcbe16b60c615816ff24fd0d0" }
 
 [[package]]
 name = "idna"
