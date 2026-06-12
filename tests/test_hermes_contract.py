@@ -100,11 +100,12 @@ class ContractCtx:
 
 
 def _cleared_token_env():
-    """Context-managed os.environ with DISCORD_TOKEN removed (offline handlers)."""
+    """Context-managed os.environ with all Discord token vars removed (offline)."""
 
     class _Ctx:
         def __enter__(self):
             self._old = dict(os.environ)
+            os.environ.pop("DISCORD_BOT_TOKEN", None)
             os.environ.pop("DISCORD_TOKEN", None)
             return os.environ
 
@@ -139,7 +140,7 @@ class StandaloneContractTests(unittest.TestCase):
             self.assertEqual(call["schema"].get("type"), "object")
             self.assertTrue(callable(call["handler"]))
             self.assertFalse(call["is_async"], "sync handlers must register is_async=False")
-            self.assertIn("DISCORD_TOKEN", call["requires_env"] or [])
+            self.assertIn("DISCORD_BOT_TOKEN", call["requires_env"] or [])
             self.assertTrue(call["description"])
 
     def test_registers_exactly_one_valid_hook(self) -> None:
@@ -174,7 +175,7 @@ class StandaloneContractTests(unittest.TestCase):
                 self.assertIn("success", decoded)
                 # No token in env -> in-band failure, never an exception.
                 self.assertFalse(decoded["success"])
-                self.assertIn("DISCORD_TOKEN", decoded["error"])
+                self.assertIn("DISCORD_BOT_TOKEN", decoded["error"])
 
     def test_tool_handler_signature_is_args_then_var_kwargs(self) -> None:
         for call in self.ctx.tool_calls:
