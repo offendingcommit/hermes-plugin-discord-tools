@@ -79,5 +79,6 @@ it is a filesystem path, the hook reads that local JSON file.
 ## Validation
 
 ```bash
-python3 -m unittest discover -s tests
+make install
+make test
 ```

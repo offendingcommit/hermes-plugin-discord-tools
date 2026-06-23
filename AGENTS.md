@@ -27,9 +27,11 @@ Read-only Discord inspection tools for Hermes Discord-facing agents.
 ## Validation
 
 ```bash
-python3 -m unittest discover -s tests
+make install
+make test
 ```
 
 The tests include a Hermes contract check against the real
 `PluginContext.register_tool` / `register_hook` signatures when a local Hermes
 checkout is available. Keep that coverage in place for registration changes.
+Dev tooling is uv-native; dependencies live in `pyproject.toml`.
