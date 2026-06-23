@@ -76,8 +76,16 @@ it is a filesystem path, the hook reads that local JSON file.
 - `DISCORD_TOOLS_STORY_THREAD_ID`: optional single story thread ID for
   `discord_read_story` when only one story is needed.
 
+## Shared helper
+
+For new tools or substantial schema/registration rewrites, prefer
+[`hermes-plugin-kit`](https://github.com/offendingcommit/hermes-plugin-kit) so
+Hermes tool schema, handler, validation, logging, and JSON-envelope conventions
+stay consistent.
+
 ## Validation
 
 ```bash
-python3 -m unittest discover -s tests
+make install
+make test
 ```
