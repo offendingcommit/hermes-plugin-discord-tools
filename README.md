@@ -30,7 +30,9 @@ surfaces the schema's `properties` as empty.
 
 The plugin logs under the `discord-tools` logger. On a rejected argument it logs
 a `WARNING` with the offending value (truncated, never the token), and on a
-successful read an `INFO` line with the resolved target. To watch it in a pod:
+successful read an `INFO` line with the resolved target. At startup,
+`hermes-plugin-kit` emits one lifecycle receipt listing the four tools and
+`pre_llm_call` hook that it registered. To watch it in a pod:
 
 ```bash
 kubectl logs -f <pod> | grep discord-tools
@@ -76,12 +78,13 @@ it is a filesystem path, the hook reads that local JSON file.
 - `DISCORD_TOOLS_STORY_THREAD_ID`: optional single story thread ID for
   `discord_read_story` when only one story is needed.
 
-## Shared helper
+## Registration
 
-For new tools or substantial schema/registration rewrites, prefer
-[`hermes-plugin-kit`](https://github.com/offendingcommit/hermes-plugin-kit) so
-Hermes tool schema, handler, validation, logging, and JSON-envelope conventions
-stay consistent.
+Every tool uses `@tool`, the hint callback uses `@hook`, and
+[`hermes-plugin-kit`](https://github.com/offendingcommit/hermes-plugin-kit)
+owns the complete lifecycle through `register_plugin`. This keeps Hermes tool
+schemas, handlers, validation, logging, JSON envelopes, and the startup
+registration inventory under one contract.
 
 ## Validation
 

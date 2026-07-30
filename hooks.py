@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from hermes_plugin_kit import hook
+
 from .tools import DISCORD_URL_RE
 
 logger = logging.getLogger("discord-tools")
@@ -91,6 +93,7 @@ def _render_hint(discord_links: list[str], story_hints: list[dict[str, Any]]) ->
     return "\n".join(lines)
 
 
+@hook("pre_llm_call")
 def inject_discord_read_hint(**kwargs: Any) -> dict[str, str] | None:
     """pre_llm_call hook: hint that read-only Discord tools can inspect links.
 
