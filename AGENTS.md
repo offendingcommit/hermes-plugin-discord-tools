@@ -23,8 +23,11 @@ Read-only Discord inspection tools for Hermes Discord-facing agents.
 - Tests must not call Discord. Keep live API access behind injectable seams.
 - The hook is hint-only. It may inspect current turn text and local static
   config, but it must not call Discord, Hindsight, Honcho, or the network.
-- For new tools or substantial schema/registration rewrites, prefer the shared
-  `hermes-plugin-kit` helper library:
+- Keep every tool and lifecycle hook declared with `hermes-plugin-kit`
+  decorators. `register_plugin` owns the complete registration path and returns
+  the exact `RegistrationSummary`; do not add direct `ctx.register_*` calls or
+  legacy `register_all` wiring.
+- The shared kit contract lives at:
   https://github.com/offendingcommit/hermes-plugin-kit
 
 ## Validation
@@ -36,5 +39,7 @@ make test
 
 The tests include a Hermes contract check against the real
 `PluginContext.register_tool` / `register_hook` signatures when a local Hermes
-checkout is available. Keep that coverage in place for registration changes.
+checkout is available. Registration tests also reject direct lifecycle wiring
+and assert the exact kit summary. Keep that coverage in place for registration
+changes.
 Dev tooling is uv-native; dependencies live in `pyproject.toml`.
