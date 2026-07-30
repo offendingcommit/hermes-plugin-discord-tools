@@ -46,14 +46,27 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 VALID_HOOKS = {
     "pre_tool_call",
     "post_tool_call",
+    "transform_terminal_output",
+    "transform_tool_result",
+    "transform_llm_output",
     "pre_llm_call",
     "post_llm_call",
+    "pre_verify",
     "pre_api_request",
     "post_api_request",
+    "api_request_error",
     "on_session_start",
     "on_session_end",
     "on_session_finalize",
     "on_session_reset",
+    "subagent_start",
+    "subagent_stop",
+    "pre_gateway_dispatch",
+    "pre_approval_request",
+    "post_approval_response",
+    "kanban_task_claimed",
+    "kanban_task_completed",
+    "kanban_task_blocked",
 }
 
 
