@@ -199,7 +199,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "discord-py", specifier = ">=2.4" },
-    { name = "hermes-plugin-kit", git = "https://github.com/offendingcommit/hermes-plugin-kit.git?branch=main" },
+    { name = "hermes-plugin-kit", git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=e578206421c4c95e147d7103917f0c703ddffdd1" },
 ]
 
 [package.metadata.requires-dev]
@@ -280,8 +280,8 @@ wheels = [
 
 [[package]]
 name = "hermes-plugin-kit"
-version = "0.1.0"
-source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?branch=main#09aa2c2b5c57fa1bcbe16b60c615816ff24fd0d0" }
+version = "0.6.0"
+source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=e578206421c4c95e147d7103917f0c703ddffdd1#e578206421c4c95e147d7103917f0c703ddffdd1" }
 
 [[package]]
 name = "idna"
