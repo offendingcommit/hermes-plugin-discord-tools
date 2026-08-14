@@ -199,7 +199,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "discord-py", specifier = ">=2.4" },
-    { name = "hermes-plugin-kit", git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=8d7dff3ffe7ae3f72e681b30a9de710786be5804" },
+    { name = "hermes-plugin-kit", git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=9c137a73473b9542eb236ccb32825dec7130504a" },
 ]
 
 [package.metadata.requires-dev]
@@ -281,7 +281,7 @@ wheels = [
 [[package]]
 name = "hermes-plugin-kit"
 version = "0.7.0"
-source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=8d7dff3ffe7ae3f72e681b30a9de710786be5804#8d7dff3ffe7ae3f72e681b30a9de710786be5804" }
+source = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git?rev=9c137a73473b9542eb236ccb32825dec7130504a#9c137a73473b9542eb236ccb32825dec7130504a" }
 dependencies = [
     { name = "pyyaml" },
 ]
