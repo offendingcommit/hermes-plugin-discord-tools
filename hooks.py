@@ -16,7 +16,8 @@ logger = logging.getLogger("discord-tools")
 
 
 def _latest_user_text(**kwargs: Any) -> str:
-    for key in ("user_text", "prompt", "message", "content"):
+    # Hermes passes the current turn as user_message; the other keys are older aliases.
+    for key in ("user_message", "user_text", "prompt", "message", "content"):
         value = kwargs.get(key)
         if isinstance(value, str) and value.strip():
             return value

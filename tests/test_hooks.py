@@ -13,6 +13,24 @@ hooks = plugin.hooks
 
 
 class HookTests(unittest.TestCase):
+    def test_injects_hint_from_the_kwargs_hermes_passes(self) -> None:
+        # The exact keyword set Hermes v0.22.5 agent/turn_context.py _collect_pre_llm_call_context sends.
+        result = hooks.inject_discord_read_hint(
+            session_id="s",
+            task_id="t",
+            turn_id="u",
+            user_message="Check https://discord.com/channels/111/222/333",
+            conversation_history=[{"role": "user", "content": "earlier"}],
+            is_first_turn=False,
+            model="m",
+            platform="discord",
+            parent_session_id="",
+            sender_id="1",
+        )
+
+        self.assertIsNotNone(result)
+        self.assertIn("https://discord.com/channels/111/222/333", result["context"])
+
     def test_injects_hint_for_discord_link(self) -> None:
         result = hooks.inject_discord_read_hint(
             messages=[
