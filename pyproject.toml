@@ -21,4 +21,4 @@ dev = [
 package = false
 
 [tool.uv.sources]
-hermes-plugin-kit = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git", rev = "90da8eb42526c71d22155ad84a0cd55cc2b444c8" }
+hermes-plugin-kit = { git = "https://github.com/offendingcommit/hermes-plugin-kit.git", rev = "ca9e1c9ad95c6414bd26c7579ca22e25b40ec9d1" }
