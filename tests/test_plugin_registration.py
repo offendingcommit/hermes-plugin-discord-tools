@@ -25,31 +25,39 @@ class FakeCtx:
 
 
 class RegistrationTests(unittest.TestCase):
-    def test_registers_read_only_tools_and_hook(self) -> None:
+    def test_registers_reads_actions_and_hook(self) -> None:
         plugin = load_plugin_module()
         ctx = FakeCtx()
 
         summary = plugin.register(ctx)
 
+        # Reads join the public `messaging` toolset. The three actions join
+        # Hermes' own `discord` toolset, so only profiles that already turn
+        # that toolset on for Discord ever see them.
         self.assertEqual(
-            {tool["name"] for tool in ctx.tools},
+            {tool["name"]: tool["toolset"] for tool in ctx.tools},
             {
-                "discord_read_channel",
-                "discord_read_thread",
-                "discord_get_message",
-                "discord_read_story",
+                "discord_read_channel": "messaging",
+                "discord_read_thread": "messaging",
+                "discord_get_message": "messaging",
+                "discord_read_story": "messaging",
+                "discord_list_emojis": "discord",
+                "discord_react": "discord",
+                "discord_send_embed": "discord",
             },
         )
-        self.assertEqual({tool["toolset"] for tool in ctx.tools}, {"messaging"})
         self.assertIn(("pre_llm_call", plugin.hooks.inject_discord_read_hint), ctx.hooks)
         self.assertEqual(
             summary,
             RegistrationSummary(
                 tools=(
                     "discord_get_message",
+                    "discord_list_emojis",
+                    "discord_react",
                     "discord_read_channel",
                     "discord_read_story",
                     "discord_read_thread",
+                    "discord_send_embed",
                 ),
                 hooks=("pre_llm_call",),
             ),

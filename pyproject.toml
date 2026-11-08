@@ -4,11 +4,11 @@
 # pod's bootstrap installs into the gateway's PYTHONPATH.
 [project]
 name = "discord-tools"
-version = "0.2.0"
-description = "Read-only Discord channel, thread, and message inspection tools for Hermes Discord-facing agents."
+version = "0.3.0"
+description = "Discord reading tools plus channel-scoped react, server emoji, and embed actions for Hermes Discord-facing agents."
 requires-python = ">=3.13"
 dependencies = [
-  "discord.py>=2.4",                 # DiscordLiveFetcher — live reads
+  "discord.py>=2.4",                 # DiscordLiveFetcher / DiscordLiveActions — live I/O
   "hermes-plugin-kit",               # Decorated tools/hooks + lifecycle registration
 ]
 

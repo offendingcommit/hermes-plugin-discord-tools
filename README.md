@@ -1,6 +1,7 @@
 # hermes-plugin-discord-tools
 
-Read-only Discord tools for Hermes Discord-facing agents.
+Discord tools for Hermes Discord-facing agents: reads, plus three small
+actions held to the channel the bot is replying in.
 
 The plugin lets a bot use its existing Discord bot token to read a channel,
 thread, or linked message that the bot can already access. It is intended as a
@@ -21,8 +22,35 @@ truth before answering.
   thread ID comes from env config, so the agent never has to supply a snowflake
   it does not have. See `DISCORD_TOOLS_STORY_THREADS_JSON` below.
 
-All tools return JSON with a `success` flag. They never write to Discord or to
-memory. Each tool's required argument name is repeated in its description (not
+These four never write to Discord or to memory.
+
+### Channel-scoped actions
+
+- `discord_list_emojis`: this server's own custom emoji the bot can use, each
+  with a ready `usage` string (`<:name:id>`). Optional `query`, `limit`.
+- `discord_react`: react with one emoji (`emoji`), any standard emoji or one of
+  this server's as `:name:` or `<:name:id>`. Reacts to the message being
+  answered, or to `message_id` when that message is in this same channel.
+- `discord_send_embed`: post one embed card (`title` and/or `description`,
+  optional `url`, `color`, `fields`, `footer`, `image_url`, `thumbnail_url`) in
+  this channel, held to Discord's embed limits, with mentions suppressed.
+
+The channel, server and triggering message come from the Hermes session the
+gateway binds for the turn, never from model arguments, so a model cannot aim
+one of these at another channel. They refuse on other platforms and in
+scheduled runs. Custom emoji from other servers are refused. One incoming
+message can cause at most 5 reactions and 2 embeds.
+
+They join Hermes' own `discord` toolset, so a profile gets them only where its
+config turns that toolset on for Discord (`platform_toolsets.discord`), the same
+switch as Hermes' built-in Discord tool.
+
+Bot permissions they need in the channel: **Add Reactions** and **Read Message
+History** (react), **Send Messages** and **Embed Links** (embeds). Listing
+emoji needs none beyond being in the server. Use External Emojis is not needed,
+since only the server's own emoji are allowed.
+
+All tools return JSON with a `success` flag. Each tool's required argument name is repeated in its description (not
 only the JSON schema) so the agent can call it correctly even when a runtime
 surfaces the schema's `properties` as empty.
 
@@ -31,7 +59,7 @@ surfaces the schema's `properties` as empty.
 The plugin logs under the `discord-tools` logger. On a rejected argument it logs
 a `WARNING` with the offending value (truncated, never the token), and on a
 successful read an `INFO` line with the resolved target. At startup,
-`hermes-plugin-kit` emits one lifecycle receipt listing the four tools and
+`hermes-plugin-kit` emits one lifecycle receipt listing the seven tools and
 `pre_llm_call` hook that it registered. To watch it in a pod:
 
 ```bash
@@ -62,10 +90,11 @@ it is a filesystem path, the hook reads that local JSON file.
 ## Environment
 
 - `DISCORD_BOT_TOKEN`: the bot token the Hermes gateway already loads — reused
-  for live Discord reads. `DISCORD_TOKEN` is accepted as a fallback alias for
+  for live Discord reads and the channel-scoped actions. `DISCORD_TOKEN` is accepted as a fallback alias for
   standalone use.
-- `DISCORD_TOOLS_ALLOWED_GUILDS`: optional comma-separated guild allowlist. If
-  unset, Discord access is bounded only by the bot token's existing visibility.
+- `DISCORD_TOOLS_ALLOWED_GUILDS`: optional comma-separated guild allowlist for
+  reads and actions. If unset, Discord access is bounded only by the bot
+  token's existing visibility.
 - `DISCORD_TOOLS_MAX_MESSAGES`: optional default/max message limit, default 100.
 - `DISCORD_TOOLS_MAX_CHARS`: optional result character budget, default 12000.
 - `DISCORD_TOOLS_TIMEOUT_SECONDS`: optional live API timeout, default 20.
@@ -91,4 +120,5 @@ registration inventory under one contract.
 ```bash
 make install
 make test
+HERMES_AGENT_PATH=<hermes checkout> make test   # adds the real-Hermes layer
 ```

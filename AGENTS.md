@@ -1,12 +1,17 @@
 # hermes-plugin-discord-tools
 
-Read-only Discord inspection tools for Hermes Discord-facing agents.
+Discord reading tools, plus three channel-scoped actions, for Hermes
+Discord-facing agents.
 
 ## Current surface
 
 - `discord_read_channel`, `discord_read_thread`, `discord_get_message`, and
-  `discord_read_story` are the only tools. They return JSON and must only read
-  Discord content the configured bot token can already access.
+  `discord_read_story` (toolset `messaging`) return JSON and only read Discord
+  content the configured bot token can already access.
+- `discord_list_emojis`, `discord_react`, and `discord_send_embed` (toolset
+  `discord`, in `actions.py`) are the only write paths. They act only in the
+  channel the bot is replying in, taken from the Hermes session
+  (`HERMES_SESSION_*`), never from model arguments.
 - `discord_read_story` reads preconfigured story threads from
   `DISCORD_TOOLS_STORY_THREADS_JSON` or `DISCORD_TOOLS_STORY_THREAD_ID`; keep
   that configuration static and env/file backed.
@@ -15,8 +20,16 @@ Read-only Discord inspection tools for Hermes Discord-facing agents.
 
 ## Guardrails
 
-- This plugin must stay read-only. Do not add send, edit, delete, react, pin,
-  retain, or memory-write behavior here.
+- The read tools stay read-only. The three actions in `actions.py` are the
+  whole write surface: no edit, delete, pin, role, member, retain, or
+  memory-write behavior, and no action that takes its channel from a model
+  argument.
+- Actions register into Hermes' own `discord` toolset, never `messaging` or a
+  new plugin toolset: Hermes turns unseen plugin toolsets on by default, while
+  `discord` is on only where a profile's config names it.
+- Every action refuses outside a live Discord turn (other platforms, cron runs),
+  holds custom emoji to the current server's palette, sends embeds with no
+  mentions, and spends from a per-message budget (`schemas.TURN_BUDGET`).
 - Reuse the profile's existing `DISCORD_BOT_TOKEN` (the token the Hermes gateway
   loads); do not introduce a second token. `DISCORD_TOKEN` is an optional
   standalone fallback alias only.
@@ -36,6 +49,10 @@ Read-only Discord inspection tools for Hermes Discord-facing agents.
 make install
 make test
 ```
+
+Run the real-Hermes layer too when a Hermes checkout is at hand:
+`HERMES_AGENT_PATH=<checkout> make test`. It binds sessions with Hermes' own
+`set_session_vars` and registers into its real registry and toolsets.
 
 The tests include a Hermes contract check against the real
 `PluginContext.register_tool` / `register_hook` signatures when a local Hermes
