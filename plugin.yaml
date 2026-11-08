@@ -1,9 +1,10 @@
 name: discord-tools
-version: 0.1.0
+version: 0.3.0
 description: >-
-  Read-only Discord channel, thread, and message inspection tools for Hermes
-  Discord-facing agents. Reuses the profile's existing DISCORD_BOT_TOKEN and
-  only reads content the bot can already access.
+  Discord channel, thread, and message reading tools for Hermes Discord-facing
+  agents, plus three actions held to the channel the bot is replying in: react
+  with any emoji, list this server's emoji, and post an embed. Reuses the
+  profile's existing DISCORD_BOT_TOKEN.
 author: offendingcommit
 kind: standalone
 provides_tools:
@@ -11,17 +12,20 @@ provides_tools:
   - discord_read_thread
   - discord_get_message
   - discord_read_story
+  - discord_list_emojis
+  - discord_react
+  - discord_send_embed
 provides_hooks:
   - pre_llm_call
 requires_env:
   - name: DISCORD_BOT_TOKEN
-    description: Existing Discord bot token loaded by the Hermes gateway. Reused for reads.
+    description: Existing Discord bot token loaded by the Hermes gateway. Reused for reads and the channel-scoped actions.
     secret: true
   - name: DISCORD_TOKEN
     description: Optional fallback alias for the bot token when running standalone.
     secret: true
   - name: DISCORD_TOOLS_ALLOWED_GUILDS
-    description: Optional comma-separated guild IDs allowed for reads.
+    description: Optional comma-separated guild IDs allowed for reads and actions.
     secret: false
   - name: DISCORD_TOOLS_STORY_HINTS
     description: Optional inline JSON story hint config for the hint hook.

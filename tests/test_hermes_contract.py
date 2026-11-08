@@ -142,18 +142,20 @@ class StandaloneContractTests(unittest.TestCase):
     def test_register_binds_to_real_tool_signature(self) -> None:
         # register() ran in setUp through ContractCtx without TypeError, which
         # already proves signature compatibility. Assert the surface explicitly.
-        names = {c["name"] for c in self.ctx.tool_calls}
+        toolsets = {c["name"]: c["toolset"] for c in self.ctx.tool_calls}
         self.assertEqual(
-            names,
+            toolsets,
             {
-                "discord_read_channel",
-                "discord_read_thread",
-                "discord_get_message",
-                "discord_read_story",
+                "discord_read_channel": "messaging",
+                "discord_read_thread": "messaging",
+                "discord_get_message": "messaging",
+                "discord_read_story": "messaging",
+                "discord_list_emojis": "discord",
+                "discord_react": "discord",
+                "discord_send_embed": "discord",
             },
         )
         for call in self.ctx.tool_calls:
-            self.assertEqual(call["toolset"], "messaging")
             schema = call["schema"]
             self.assertIsInstance(schema, dict)
             # Hermes convention: args live under `parameters`, NOT at the top
@@ -185,8 +187,16 @@ class StandaloneContractTests(unittest.TestCase):
                 "message_id_or_url": "https://discord.com/channels/1/2/3"
             },
             "discord_read_story": {},
+            "discord_list_emojis": {},
+            "discord_react": {"emoji": "🔥"},
+            "discord_send_embed": {"title": "t"},
         }
-        with _cleared_token_env():
+        with _cleared_token_env() as env:
+            # A Discord session is bound so the actions get past their
+            # channel-scope check and reach the token check, offline.
+            env["HERMES_SESSION_PLATFORM"] = "discord"
+            env["HERMES_SESSION_CHAT_ID"] = "2" * 18
+            env["HERMES_SESSION_MESSAGE_ID"] = "3" * 18
             for call in self.ctx.tool_calls:
                 handler = call["handler"]
                 # hermes invokes handlers as handler(args, **kwargs); extra
