@@ -162,3 +162,20 @@ Registration tests reject direct lifecycle wiring and assert the exact kit
 summary. Keep that coverage in place for registration changes.
 
 Dev tooling is uv-native; dependencies live in `pyproject.toml`.
+
+## hermes-plugin-kit version
+
+Hermes doesn't install this plugin's dependencies. The runtime image bakes one `hermes-plugin-kit` for every plugin, at the rev in offendingcommit/infra `clusters/minilab/hermes-agent/files/plugin-dependency-policy.json` (`shared_dependencies.hermes-plugin-kit.install_requirement`). Live plugin updates ship this repo's code onto that kit and never install the rev in `pyproject.toml`. So a pin ahead of the fleet's kit passes every local test and breaks in production.
+
+On 2026-11-20, persona-voice and sirens pinned a kit that added `MediaDeliveryResult.deferred` while the fleet still baked an older kit. Every voice memo and image send crashed after delivering, and the model retried, so each one arrived twice.
+
+- **Declare a range, pin the fleet rev.** `dependencies` lists `"hermes-plugin-kit>=0.9.0,<1"` (the policy's `same-major` rule). `[tool.uv.sources]` pins the git `rev` to the fleet policy's rev exactly. Never use a PEP 508 direct reference (`@ git+…`); it can't carry a range.
+- **Check before touching the pin or using a kit API.** Read the fleet rev from the policy file on infra's `main`:
+
+  ```bash
+  gh api repos/offendingcommit/infra/contents/clusters/minilab/hermes-agent/files/plugin-dependency-policy.json --jq .content | base64 -d | jq -r '.shared_dependencies["hermes-plugin-kit"].install_requirement'
+  ```
+
+  This repo's rev must equal that rev or be an ancestor of it: `git -C <kit checkout> merge-base --is-ancestor <this rev> <fleet rev>`.
+- **New kit API ships fleet first.** Merge the kit change, then move the fleet with infra's `hermes-plugin-snapshot-promotion.yml` (`shared_dependency=hermes-plugin-kit=<40-char sha>`). Bump this repo's `rev` only after that promotion merges, then run `uv lock` and the tests.
+- **Read new kit fields defensively** when they could meet an older kit (`getattr(result, "field", default)`). A crash after a side effect makes the model repeat the side effect.
